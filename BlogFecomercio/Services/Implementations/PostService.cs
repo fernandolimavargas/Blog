@@ -123,23 +123,49 @@ namespace BlogFecomercio.Services.Implementations
             }
         }
 
-        public async Task<Post> UpdatePost(int postId, string title, string body, string tag, int userId)
+        public async Task<PostDTO> UpdatePost(int postId, string title, string body, string tag, int userId)
         {
-            var post = await _context.Posts.FindAsync(postId);
-            if (post == null)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                throw new KeyNotFoundException($"Post com ID {postId} não encontrado.");
+                var post = await _context.Posts.FindAsync(postId);
+                if (post == null)
+                {
+                    throw new KeyNotFoundException($"Post com ID {postId} não encontrado.");
+                }
+
+                post.Title = title;
+                post.Body = body;
+                post.TagNome = tag;
+                post.Usuarioid = userId;
+
+                _context.Posts.Update(post);
+                await _context.SaveChangesAsync();
+
+                return new PostDTO
+                {
+                    Id = post.Id,
+                    Title = post.Title,
+                    Body = post.Body,
+                    TagNome = post.TagNome,
+                    DataHoraPostados = post.DataHoraPostados,
+                    Username = (await _context.Usuarios.FindAsync(post.Usuarioid))?.Username ?? "",
+                    TotalCurtidas = post.Curtidas?.Count() ?? 0,
+                    Comentarios = post.Comentarios?.Select(c => new ComentarioDTO
+                    {
+                        Id = c.ComentarioId,
+                        Conteudo = c.Texto,
+                        Autor = c.Usuario.Username,
+                        DataComentario = c.DataHoraComentario
+                    }).ToList() ?? new List<ComentarioDTO>()
+                };
+
+            } catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                await transaction.CommitAsync();
+                throw new Exception("[ROLLBACK] Erro ao salvar post: " + ex.Message);
             }
-
-            post.Title = title;
-            post.Body = body;
-            post.TagNome = tag;
-            post.Usuarioid = userId;
-
-            _context.Posts.Update(post);
-            await _context.SaveChangesAsync();
-
-            return post;
         }
 
         public async Task<List<Post>> GetAllPostsByTag(string tag)

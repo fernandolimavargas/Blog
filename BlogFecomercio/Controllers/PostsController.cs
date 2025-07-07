@@ -15,11 +15,12 @@ namespace BlogFecomercio.Controllers
         private readonly ITagService _tagService;
         private readonly IComentarioService _comentarioService;
         private readonly IUsuarioService _usuarioService;
-        public PostsController(IPostService postService, ITagService tagService, IUsuarioService usuarioService)
+        public PostsController(IPostService postService, ITagService tagService, IUsuarioService usuarioService, IComentarioService comentarioService)
         {
             _postService = postService;
             _tagService = tagService;
             _usuarioService = usuarioService;
+            _comentarioService = comentarioService;
         }
 
         [HttpGet("username={username}/meus-posts")]
@@ -52,7 +53,7 @@ namespace BlogFecomercio.Controllers
             }
         }
 
-        [HttpPost("user={userId}/novo-post")]
+        [HttpPost("user={userId}/novo")]
         public async Task<ActionResult<Post>> CriarPost(int userId, string? title = null, string? body = null, string? tag = null)
         {
             try
@@ -74,9 +75,8 @@ namespace BlogFecomercio.Controllers
             }
         }
 
-
         [HttpPost("user={userId}/editar/{postId}")]
-        public async Task<ActionResult<Post>> EditarPost(int postId, int userId, string? title = null, string? body = null, string? tag = null)
+        public async Task<ActionResult<PostDTO>> EditarPost(int postId, int userId, string? title = null, string? body = null, string? tag = null)
         {
             try
             {
@@ -115,9 +115,9 @@ namespace BlogFecomercio.Controllers
             {
                 return NotFound(knfEx.Message);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                return StatusCode(500, $"Erro interno: {ex.Message}");
+                return BadRequest(new { erro = e.Message });
             }
         }
         [HttpGet("comentario-buscar/{postId}")]

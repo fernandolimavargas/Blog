@@ -3,13 +3,14 @@ using BlogFecomercio.DTOs;
 using BlogFecomercio.Models;
 using BlogFecomercio.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace BlogFecomercio.Services.Implementations
 {
     public class ComentarioService : IComentarioService
     {
         private readonly AppDbContext _context;
-
+            
         public ComentarioService(AppDbContext context)
         {
             _context = context;
@@ -19,21 +20,12 @@ namespace BlogFecomercio.Services.Implementations
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                Console.WriteLine("Verificando existência do post...");
-                var existePost = await _context.Posts.FindAsync(postId);
-                if (existePost == null)
-                {
-                    throw new Exception("Post não encontrado.");
-                }
-
-                Console.WriteLine("Verificando existência do usuário...");
-                var existeUsuario = await _context.Usuarios.FindAsync(usuarioId);
-                if (existeUsuario == null)
+                var usuario = await _context.Usuarios.FindAsync(usuarioId);
+                if (usuario == null)
                 {
                     throw new Exception("Usuário não encontrado.");
                 }
 
-                Console.WriteLine("Criando novo comentário...");
                 var comentario = new Comentario
                 {
                     PostId = postId,
@@ -42,22 +34,19 @@ namespace BlogFecomercio.Services.Implementations
                     DataHoraComentario = DateTime.Now
                 };
 
+
+
                 _context.Comentarios.Add(comentario);
-
-                Console.WriteLine("Salvando no banco...");
                 await _context.SaveChangesAsync();
-
-                Console.WriteLine("Fazendo commit da transação...");
                 await transaction.CommitAsync();
 
-                Console.WriteLine("Montando DTO...");
                 return new ComentarioDTO
                 {
                     Id = comentario.ComentarioId,
                     Conteudo = comentario.Texto,
                     DataComentario = comentario.DataHoraComentario,
-                    Autor = existeUsuario.Username
-                };
+                    Autor = comentario.Usuario.Username,
+                }; 
             }
             catch (Exception ex)
             {

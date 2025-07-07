@@ -11,7 +11,7 @@ namespace BlogFecomercio.Services.Interfaces
         Task<IEnumerable<PostDTO>> GetPostTo24HoursBefore(int usuarioId);
         Task<IEnumerable<PostDTO>> GetTopCurtidasUltimas24Horas(int usuarioId);
         Task<Post> AddPost(string title, string body, string tag, int userId);
-        Task<Post> UpdatePost(int postId, string title, string body, string tag, int userId);
+        Task<PostDTO> UpdatePost(int postId, string title, string body, string tag, int userId);
         Task<List<Post>> GetAllPostsByTag(string tag);
         Task<Post> DeletePost(int postId);
         Task<Post> GetPostById(int postId);
